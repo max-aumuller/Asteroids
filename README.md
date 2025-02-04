@@ -1,2 +1,2 @@
 # Asteroids
-The game 'Asteroids@
+The game 'Asteroids'
