@@ -1,5 +1,6 @@
 import pygame
 import random
+import math
 from pygame import Vector2
  
 # Define some colors
@@ -33,22 +34,25 @@ asteroids = pygame.sprite.Group()
 
 # create player class
 class Player(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, pos):
         super().__init__()
         pygame.init()
         pygame.display.set_mode((1280, 900))
         player_x = 20
         player_y = 20
-        #self.image = pygame.image.load("ship.png").convert_alpha()
-        #self.image = pygame.transform.scale(self.image, (50, 50))
-        self.image = pygame.Surface([20, 20])
-        self.image.fill(RED)
-        self.rect = self.image.get_rect()
+        self.image = pygame.image.load("ship.png").convert_alpha()
+        self.image = pygame.transform.scale(self.image, (50, 50))
+        self.rect = self.image.get_rect(center = pos)
         self.rect.x = 350
         self.rect.y = 250
         self.direction = Vector2(0, -1)
         self.x_speed = 0
         self.y_speed = 0
+        self.angle = 0
+        self.orig_image = self.image
+        self.pos = Vector2(player_x, player_y)
+        self.offset = Vector2(50, 0)
+        self.orig_rect = self.image.get_rect(center=(1280//2, 900//2))
         self.angle = 0
     
     def update(self):
@@ -66,17 +70,20 @@ class Player(pygame.sprite.Sprite):
             if event.key == pygame.K_UP:
                 self.y_speed = -10
     
-    def rotate(self, angle):
-        self.angle += angle
-        self.direction = self.direction.rotate(angle)
-        self.image = pygame.transform.rotate(self.image, -self.angle)
-        self.rect = self.image.get_rect(center=self.rect.center)
+    def rotate(self):
+        """Rotate the image of the sprite around a pivot point."""
+        # Rotate the image.
+        self.image = pygame.transform.rotozoom(self.orig_image, -self.angle, 1)
+        # Rotate the offset vector.
+        offset_rotated = self.offset.rotate(self.angle)
+        # Create a new rect with the center of the sprite + the offset.
+        self.rect = self.image.get_rect(center=self.pos+offset_rotated)
 
 
 # create player group
 all_sprites = pygame.sprite.Group()
 player = pygame.sprite.Group()
-player1 = Player()
+player1 = Player((320, 240))
 player.add(player1)
 all_sprites.add(player1)
 
@@ -104,9 +111,10 @@ while not done:
             if event.key == pygame.K_ESCAPE:
                 done = True
             elif event.key == pygame.K_LEFT:
-                player1.rotate(10)
-            elif event.key == pygame.K_RIGHT:
-                player1.rotate(-10)
+                player1.angle+=1
+                rotated_image = pygame.transform.rotozoom(player1.image, player1.angle, 1)  # rotozoom avoids size issues
+                rotated_rect = rotated_image.get_rect(center= player1.orig_rect.center)
+
  
     # --- Game logic should go here
     if len(asteroids) < 4:
